@@ -9,7 +9,7 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
-    minWidth: 900,
+    minWidth: 970,
     minHeight: 560,
     title: 'Claude 会话历史',
     backgroundColor: '#1e1e2e',
@@ -24,6 +24,8 @@ function createWindow(): void {
   // electron-vite 注入的开发服务器地址;生产加载打包后的 html
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
+    // 开发模式自动打开 DevTools(独立窗口,不挤压应用布局)供审查
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }

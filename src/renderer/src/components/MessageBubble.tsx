@@ -7,6 +7,7 @@ import { ToolUseView } from './ToolUseView'
 
 interface Props {
   message: DetailMessage
+  highlighted?: boolean
   onDelete: (uuid: string) => void
   onRestore: (uuid: string) => void
 }
@@ -22,7 +23,7 @@ function Images({ srcs }: { srcs: string[] }): JSX.Element {
   )
 }
 
-export function MessageBubble({ message, onDelete, onRestore }: Props): JSX.Element {
+export function MessageBubble({ message, highlighted, onDelete, onRestore }: Props): JSX.Element {
   const [showThinking, setShowThinking] = useState(false)
   const [openTools, setOpenTools] = useState<Record<number, boolean>>({})
   const [openTool, setOpenTool] = useState(false)
@@ -32,7 +33,7 @@ export function MessageBubble({ message, onDelete, onRestore }: Props): JSX.Elem
   // 已被占位删除:显示占位卡片,悬停看原文,可恢复
   if (message.removed) {
     return (
-      <div className={`bubble-row ${isUser ? 'user' : 'assistant'}`}>
+      <div className={`bubble-row ${isUser ? 'user' : 'assistant'}${highlighted ? ' search-hit' : ''}`}>
         <div className="bubble removed">
           <div className="bubble-head">
             <span className="role">{isUser ? '我' : 'Claude'}</span>
@@ -61,7 +62,7 @@ export function MessageBubble({ message, onDelete, onRestore }: Props): JSX.Elem
   if (message.role === 'tool') {
     const preview = (message.text.split('\n').find((l) => l.trim()) ?? '').slice(0, 80)
     return (
-      <div className="bubble-row assistant">
+      <div className={`bubble-row assistant${highlighted ? ' search-hit' : ''}`}>
         <div className="bubble tool-result">
           <div className="bubble-head">
             <button className="collapse-btn" onClick={() => setOpenTool((v) => !v)}>
@@ -89,7 +90,7 @@ export function MessageBubble({ message, onDelete, onRestore }: Props): JSX.Elem
   }
 
   return (
-    <div className={`bubble-row ${isUser ? 'user' : 'assistant'}`}>
+    <div className={`bubble-row ${isUser ? 'user' : 'assistant'}${highlighted ? ' search-hit' : ''}`}>
       <div className="bubble">
         <div className="bubble-head">
           <span className="role">{isUser ? '我' : 'Claude'}</span>

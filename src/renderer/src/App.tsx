@@ -33,6 +33,12 @@ export default function App(): JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<SessionSummary | null>(null)
   const [showHidden, setShowHidden] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [midWidth, setMidWidth] = useState(() => {
+    const saved = Number(localStorage.getItem('csh-mid-w'))
+    const v = saved >= 280 && saved <= 640 ? saved : 360
+    // 保证右栏至少 360px(避免窄窗口下沿用旧的大宽度挤压右栏)
+    return Math.min(v, Math.max(280, window.innerWidth - 250 - 360))
+  })
 
   const loadProjects = useCallback(async () => {
     setProjects(await window.api.listProjects())
@@ -120,6 +126,30 @@ export default function App(): JSX.Element {
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2600)
+  }, [])
+
+  // 拖拽调整中栏宽度(左栏固定 250px,故中栏宽 = 鼠标 X - 250),范围 280–640
+  const startResize = useCallback(() => {
+    const onMove = (ev: MouseEvent): void => {
+      // 中栏上限 = 窗口宽 - 左栏 250 - 右栏最小 360,且不超过 640
+      const maxMid = Math.min(640, Math.max(280, window.innerWidth - 250 - 360))
+      setMidWidth(Math.min(maxMid, Math.max(280, ev.clientX - 250)))
+    }
+    const onUp = (): void => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      setMidWidth((w) => {
+        localStorage.setItem('csh-mid-w', String(w))
+        return w
+      })
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [])
+
+  const resetMid = useCallback(() => {
+    setMidWidth(360)
+    localStorage.setItem('csh-mid-w', '360')
   }, [])
 
   const handleResume = useCallback(
@@ -242,7 +272,17 @@ export default function App(): JSX.Element {
   }, [loadProjects, loadSessions, activeProjectDir, showHidden])
 
   return (
-    <div className="app">
+    <div className="app" style={{ gridTemplateColumns: `250px ${midWidth}px 1fr` }}>
+      <div
+        className="col-resizer"
+        style={{ left: 250 + midWidth }}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          startResize()
+        }}
+        onDoubleClick={resetMid}
+        title="拖拽调整宽度(双击复位)"
+      />
       <ProjectSidebar
         projects={projects}
         activeProjectDir={activeProjectDir}
